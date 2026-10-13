@@ -1,4 +1,5 @@
-import { useSyncExternalStore } from "react"
+import { useMemo, useSyncExternalStore } from "react"
+import builtinCatalog from "./data/pavlodar-facilities.json"
 
 export type Facility = {
   name: string
@@ -13,7 +14,21 @@ export type Facility = {
   status?: string
   origin?: string
   comment?: string
+  builtin?: boolean
 }
+
+export const BUILTIN_FACILITIES: Facility[] = (builtinCatalog as Facility[]).map((f) => ({ ...f, builtin: true }))
+
+/** 0 = unknown, 1 = medium, 2 = high, 3 = very high — parsed from the free-text emissions field (ru/kk/en). */
+export function emissionLevel(emissions: string | undefined): 0 | 1 | 2 | 3 {
+  const s = (emissions ?? "").toLowerCase()
+  if (/очень|өте|very/.test(s)) return 3
+  if (/высок|жоғары|high/.test(s)) return 2
+  if (/средн|орташа|medium|moderate/.test(s)) return 1
+  return 0
+}
+
+export const EMISSION_HEX = ["#8a9a90", "#d9a12b", "#d2602f", "#9e1f3c"] as const
 
 export const FACILITY_FIELDS = [
   "name",
@@ -64,8 +79,13 @@ function subscribe(cb: () => void) {
   }
 }
 
-export function useFacilities() {
+export function useUserFacilities() {
   return useSyncExternalStore(subscribe, read, () => EMPTY)
+}
+
+export function useFacilities() {
+  const user = useUserFacilities()
+  return useMemo(() => [...BUILTIN_FACILITIES, ...user], [user])
 }
 
 export function addFacilities(items: Facility[]) {

@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic"
 import { About, SiteFooter } from "@/components/eco/about"
+import { AiAnalysis } from "@/components/eco/ai-analysis"
 import { AirOverview } from "@/components/eco/air-overview"
 import { EcoProvider } from "@/components/eco/eco-provider"
 import { Facilities } from "@/components/eco/facilities"
@@ -20,6 +21,7 @@ export default function Page() {
         <AirOverview />
         <WeatherMap />
         <Trends />
+        <AiAnalysis />
         <Facilities />
         <About />
       </main>

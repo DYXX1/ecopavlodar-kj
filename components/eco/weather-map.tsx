@@ -12,8 +12,8 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { CITIES, aqiBand, latestValue, type City, type Lang } from "@/lib/eco-data"
-import { escapeHtml, useFacilities } from "@/lib/facilities"
-import { OVERLAY_LAYERS, OVERLAY_SCALE, WindOverlay, fetchGrid, type OverlayLayer } from "@/lib/wind-overlay"
+import { EMISSION_HEX, emissionLevel, escapeHtml, useFacilities } from "@/lib/facilities"
+import { OVERLAY_LAYERS, WindOverlay, fetchGrid, overlayScale, type OverlayLayer } from "@/lib/wind-overlay"
 import { useCitySeries, useEco } from "./eco-provider"
 import { SectionHeading } from "./section-heading"
 
@@ -53,6 +53,7 @@ export function WeatherMap() {
 
   const [layer, setLayer] = useState<OverlayLayer>("wind_speed_10m")
   const [particles, setParticles] = useState(true)
+  const [adaptive, setAdaptive] = useState(true)
   const [ti, setTi] = useState<number | null>(null)
   const [playing, setPlaying] = useState(false)
 
@@ -107,6 +108,10 @@ export function WeatherMap() {
   }, [particles, map])
 
   useEffect(() => {
+    overlayRef.current?.setAdaptive(adaptive)
+  }, [adaptive, map])
+
+  useEffect(() => {
     overlayRef.current?.setTime(timeIndex)
   }, [timeIndex, map])
 
@@ -158,7 +163,11 @@ export function WeatherMap() {
     }
   }, [map])
 
-  const scale = layer !== "off" ? OVERLAY_SCALE[layer] : null
+  const scale = layer !== "off" ? overlayScale(g, layer, timeIndex, adaptive) : null
+  const span = scale ? scale.range[1] - scale.range[0] : 0
+  const fmtScale = (v: number) => (span < 10 ? v.toFixed(1) : String(Math.round(v)))
+  const whoPct =
+    scale?.who != null ? ((scale.who - scale.range[0]) / Math.max(span, 1e-6)) * 100 : null
   const airMissing = Boolean(g && !g.airAvailable && scale?.who != null)
   const nowPct = g ? (g.nowIndex / Math.max(1, g.time.length - 1)) * 100 : 0
   const isForecast = g ? timeIndex > g.nowIndex : false
@@ -190,10 +199,16 @@ export function WeatherMap() {
                 </SelectContent>
               </Select>
             </div>
-            <label className="flex items-center gap-2 text-sm">
-              <Switch checked={particles} onCheckedChange={setParticles} />
-              {t.map.particles}
-            </label>
+            <div className="flex flex-wrap items-center gap-4">
+              <label className="flex items-center gap-2 text-sm" title={t.map.adaptiveHint}>
+                <Switch checked={adaptive} onCheckedChange={setAdaptive} />
+                {t.map.adaptive}
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Switch checked={particles} onCheckedChange={setParticles} />
+                {t.map.particles}
+              </label>
+            </div>
           </div>
 
           <div className="relative">
@@ -207,22 +222,24 @@ export function WeatherMap() {
                   className="relative mt-2 h-2 rounded-full"
                   style={{ background: `linear-gradient(to right, ${scale.colors.join(",")})` }}
                 >
-                  {scale.who != null && (
-                    <span
-                      className="absolute -top-1 h-4 w-0.5 bg-foreground"
-                      style={{ left: `${((scale.who - scale.range[0]) / (scale.range[1] - scale.range[0])) * 100}%` }}
-                    />
+                  {whoPct != null && whoPct >= 0 && whoPct <= 100 && (
+                    <span className="absolute -top-1 h-4 w-0.5 bg-foreground" style={{ left: `${whoPct}%` }} />
                   )}
                 </div>
                 <div className="mt-1 flex justify-between tabular-nums text-muted-foreground">
-                  <span>{scale.range[0]}</span>
-                  <span>{scale.range[1]}+</span>
+                  <span>{fmtScale(scale.range[0])}</span>
+                  <span>
+                    {fmtScale(scale.range[1])}
+                    {scale.adaptive ? "" : "+"}
+                  </span>
                 </div>
                 {scale.who != null && (
                   <p className="mt-1 text-muted-foreground">
-                    | {t.map.who}: {scale.who}
+                    {t.map.who}: {scale.who}
+                    {whoPct != null && whoPct > 100 ? " ↑" : ""}
                   </p>
                 )}
+                {scale.adaptive && <p className="mt-1 text-[10px] leading-tight text-muted-foreground">{t.map.adaptiveNote}</p>}
               </div>
             )}
 
@@ -232,8 +249,14 @@ export function WeatherMap() {
                 {t.map.cityLayer}
               </span>
               <span className="flex items-center gap-2">
-                <span className="size-3 rotate-45 border-2 border-card bg-[var(--chart-2)] shadow" />
+                <span className="size-3 rotate-45 border-2 border-card shadow" style={{ background: EMISSION_HEX[3] }} />
                 {t.map.facilityLayer}
+              </span>
+              <span className="flex items-center gap-1 pl-5 text-[10px] text-muted-foreground">
+                {[1, 2, 3].map((l) => (
+                  <span key={l} className="size-2 rotate-45" style={{ background: EMISSION_HEX[l] }} />
+                ))}
+                {t.map.emissionScale}
               </span>
             </div>
 
@@ -362,21 +385,25 @@ function FacilityMarkers({ map, L }: { map: Leaflet.Map; L: typeof Leaflet }) {
   useEffect(() => {
     const group = L.layerGroup().addTo(map)
     for (const o of items) {
-      const verified = o.status === "verified"
+      const level = emissionLevel(o.emissions)
+      const size = 12 + level * 3
       L.marker([o.lat, o.lon], {
         icon: L.divIcon({
           className: "",
-          html: `<span style="display:block;width:14px;height:14px;transform:rotate(45deg);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.35);background:${verified ? "#c48a2c" : "#b5523b"}"></span>`,
-          iconSize: [14, 14],
-          iconAnchor: [7, 7],
+          html: `<span style="display:block;width:${size}px;height:${size}px;transform:rotate(45deg);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);background:${EMISSION_HEX[level]}"></span>`,
+          iconSize: [size, size],
+          iconAnchor: [size / 2, size / 2],
         }),
+        zIndexOffset: 100 + level * 10,
       })
         .addTo(group)
+        .bindTooltip(o.name, { direction: "top", offset: [0, -size / 2] })
         .bindPopup(
-          `<strong>${escapeHtml(o.name)}</strong>${o.type ? ` · ${escapeHtml(o.type)}` : ""}<br>` +
-            `${escapeHtml(o.description ?? "")}<br>` +
-            `${escapeHtml(verified ? t.facilities.verified : t.facilities.needsCheck)}` +
-            `${o.emissions ? `<br>${escapeHtml(o.emissions)} ${escapeHtml(o.period ?? "")}` : ""}` +
+          `<strong>${escapeHtml(o.name)}</strong>${o.type ? `<br><span style="opacity:.75">${escapeHtml(o.type)}</span>` : ""}<br>` +
+            `${escapeHtml(o.description ?? "")}` +
+            `${o.emissions ? `<br>${escapeHtml(t.facilities.emissionsLabel)}: <strong style="color:${EMISSION_HEX[level]}">${escapeHtml(o.emissions)}</strong>` : ""}` +
+            `${o.status ? `<br>${escapeHtml(o.status)}${o.origin ? ` · ${escapeHtml(o.origin)}` : ""}` : ""}` +
+            `${o.comment ? `<br><small style="opacity:.75">${escapeHtml(o.comment)}</small>` : ""}` +
             `${o.url && /^https?:\/\//.test(o.url) ? `<br><a href="${escapeHtml(o.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(o.source || "link")}</a>` : o.source ? `<br>${escapeHtml(o.source)}` : ""}`,
         )
     }

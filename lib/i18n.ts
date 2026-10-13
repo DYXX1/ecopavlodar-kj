@@ -3,7 +3,7 @@ import type { Lang, Param } from "./eco-data"
 type BandKey = "good" | "fair" | "moderate" | "poor" | "vpoor" | "epoor"
 
 export type Dict = {
-  nav: { overview: string; map: string; trends: string; facilities: string; about: string }
+  nav: { overview: string; map: string; trends: string; analysis: string; facilities: string; about: string }
   langLabel: string
   hero: { eyebrow: string; title: string; subtitle: string; chooseCity: string; explore: string }
   aqi: { title: string; scale: string; updated: string; advice: string; unavailable: string }
@@ -40,6 +40,37 @@ export type Dict = {
     who: string
     cityLayer: string
     facilityLayer: string
+    adaptive: string
+    adaptiveHint: string
+    adaptiveNote: string
+    emissionScale: string
+  }
+  range: {
+    title: string
+    from: string
+    to: string
+    apply: string
+    since2025: string
+    thisYear: string
+    last90: string
+    last30: string
+    loading: string
+    summary: string
+  }
+  analysis: {
+    title: string
+    subtitle: string
+    focus: string
+    focusOptions: { overview: string; health: string; industry: string; seasonal: string; today: string }
+    question: string
+    questionPlaceholder: string
+    run: string
+    running: string
+    stop: string
+    error: string
+    empty: string
+    basedOn: string
+    disclaimer: string
   }
   trends: {
     title: string
@@ -47,7 +78,7 @@ export type Dict = {
     parameter: string
     airGroup: string
     weatherGroup: string
-    periods: { d1: string; d7: string; d30: string; d90: string }
+    periods: { all: string; d1: string; d7: string; d30: string; d90: string }
     mean: string
     min: string
     max: string
@@ -75,6 +106,7 @@ export type Dict = {
     subtitle: string
     emptyTitle: string
     emptyDesc: string
+    emissionsLabel: string
     importTitle: string
     importDesc: string
     chooseFile: string
@@ -132,8 +164,8 @@ const params = {
     wind_gusts_10m: "Жел екпіні",
     wind_direction_10m: "Жел бағыты",
     european_aqi: "Еуропалық AQI",
-    pm2_5: "Ұсақ бөлшектер PM2.5",
-    pm10: "Бөлшектер PM10",
+    pm2_5: "Ұсақ қалқыма бөлшектер PM2.5",
+    pm10: "Қалқыма бөлшектер PM10",
     nitrogen_dioxide: "Азот диоксиді NO2",
     sulphur_dioxide: "Күкірт диоксиді SO2",
     ozone: "Озон O3",
@@ -169,7 +201,14 @@ const paramsShort: Partial<Record<Param, string>> = {
 
 export const DICT: Record<Lang, Dict> = {
   ru: {
-    nav: { overview: "Обзор", map: "Карта", trends: "Динамика", facilities: "Объекты", about: "О данных" },
+    nav: {
+      overview: "Обзор",
+      map: "Карта",
+      trends: "Динамика",
+      analysis: "ИИ-анализ",
+      facilities: "Объекты",
+      about: "О данных",
+    },
     langLabel: "Язык",
     hero: {
       eyebrow: "Павлодарская область · экомонитор",
@@ -215,7 +254,7 @@ export const DICT: Record<Lang, Dict> = {
     },
     map: {
       title: "Живая карта ветра и воздуха",
-      subtitle: "Частицы показывают перенос воздуха; цвет — значение выбранного слоя. Нажмите на карту, чтобы узнать значение.",
+      subtitle: "Частицы показывают перенос воздуха; цвет — значение выбранного слоя. Нажмите на карту, что��ы узнать значение.",
       layer: "Слой",
       off: "Без слоя",
       particles: "Частицы ветра",
@@ -231,7 +270,44 @@ export const DICT: Record<Lang, Dict> = {
       legendNote: "Шкала только для визуализации",
       who: "ВОЗ",
       cityLayer: "Города (индекс AQI)",
-      facilityLayer: "Ваши объекты",
+      facilityLayer: "Предприятия",
+      adaptive: "Контрастная шкала",
+      adaptiveHint: "Растянуть цвета на текущий диапазон значений, чтобы видеть даже небольшие различия",
+      adaptiveNote: "Шкала растянута по текущим значениям на карте",
+      emissionScale: "выбросы: мало → много",
+    },
+    range: {
+      title: "Период данных",
+      from: "С",
+      to: "По",
+      apply: "Применить",
+      since2025: "С января 2025",
+      thisYear: "Этот год",
+      last90: "90 дней",
+      last30: "30 дней",
+      loading: "Загружаем архив Open-Meteo…",
+      summary: "Архив Open-Meteo: {n} дн.",
+    },
+    analysis: {
+      title: "ИИ-аналитик региона",
+      subtitle: "Gemini анализирует архив Open-Meteo за выбранный период, текущие значения и каталог предприятий.",
+      focus: "Фокус анализа",
+      focusOptions: {
+        overview: "Общий обзор",
+        health: "Здоровье",
+        industry: "Промышленность",
+        seasonal: "Сезонность",
+        today: "Сегодня",
+      },
+      question: "Ваш вопрос (необязательно)",
+      questionPlaceholder: "Например: в какие месяцы PM2.5 был выше всего и почему?",
+      run: "Анализировать",
+      running: "Анализируем…",
+      stop: "Остановить",
+      error: "Не удалось получить ответ от Gemini. Попробуйте ещё раз.",
+      empty: "Выберите фокус и нажмите «Анализировать», чтобы получить разбор прошлого и настоящего региона.",
+      basedOn: "Данные: {city}, {from} — {to}",
+      disclaimer: "Анализ сгенерирован ИИ на основе модельных данных и может содержать ошибки.",
     },
     trends: {
       title: "Динамика и аналитика",
@@ -239,7 +315,7 @@ export const DICT: Record<Lang, Dict> = {
       parameter: "Показатель",
       airGroup: "Воздух",
       weatherGroup: "Погода",
-      periods: { d1: "24 ч", d7: "7 дн.", d30: "30 дн.", d90: "90 дн." },
+      periods: { all: "Весь период", d1: "24 ч", d7: "7 дн.", d30: "30 дн.", d90: "90 дн." },
       mean: "Среднее",
       min: "Минимум",
       max: "Максимум",
@@ -268,6 +344,7 @@ export const DICT: Record<Lang, Dict> = {
       subtitle: "Добавьте известные предприятия или точки наблюдения — они появятся на карте.",
       emptyTitle: "Пока нет объектов",
       emptyDesc: "Импортируйте JSON или CSV-файл, чтобы добавить проверенные объекты на карту.",
+      emissionsLabel: "Выбросы",
       importTitle: "Импорт каталога",
       importDesc: "JSON-массив или CSV с колонками:",
       chooseFile: "Выберите файл",
@@ -294,7 +371,7 @@ export const DICT: Record<Lang, Dict> = {
       ],
       methodology: "Методология",
       methodologyText:
-        "Погода и качество воздуха загружаются почасово за последние 92 дня. Средние для направления ветра считаются по кругу. Превышение норм ВОЗ оценивается по среднесуточным значениям.",
+        "Погода и качество воздуха загружаются почасово из архива Open-Meteo за выбранный период (с января 2025 года). Средние для направления ветра считаются по кругу. Превышение норм ВОЗ оценивается по среднесуточным значениям.",
       sourceNotes: {
         weather: "Почасовая модель и анализ погоды",
         air: "Модель CAMS, не измерения станций",
@@ -310,110 +387,161 @@ export const DICT: Record<Lang, Dict> = {
     paramsShort,
   },
   kk: {
-    nav: { overview: "Шолу", map: "Карта", trends: "Динамика", facilities: "Нысандар", about: "Деректер" },
+    nav: {
+      overview: "Шолу",
+      map: "Карта",
+      trends: "Динамика",
+      analysis: "ЖИ талдауы",
+      facilities: "Нысандар",
+      about: "Деректер туралы",
+    },
     langLabel: "Тіл",
     hero: {
       eyebrow: "Павлодар облысы · экомонитор",
-      title: "Ертіс өңірінде немен тыныстаймыз",
+      title: "Ертіс өңірінде немен тыныс аламыз",
       subtitle:
-        "Павлодар, Екібастұз және Ақсудағы ауа сапасы мен ауа райы — түсінікті тілмен, ДДСҰ нормаларымен және денсаулыққа кеңестермен.",
+        "Павлодар, Екібастұз және Ақсу қалаларындағы ауа сапасы мен ауа райы — түсінікті тілде, ДДСҰ ұсынымдарымен және денсаулыққа арналған кеңестермен.",
       chooseCity: "Қаланы таңдаңыз",
       explore: "Картаны ашу",
     },
     aqi: {
       title: "Ауа сапасының индексі",
       scale: "Еуропалық AQI, 0–100+",
-      updated: "Дерек уақыты",
+      updated: "Деректер уақыты",
       advice: "Ұсыныс",
-      unavailable: "Ауа деректері қазір қолжетімсіз",
+      unavailable: "Ауа сапасы туралы деректер қазір қолжетімсіз",
     },
     bands: {
-      good: { label: "Жақсы", advice: "Серуенге, спортқа және желдетуге тамаша күн." },
-      fair: { label: "Қанағаттанарлық", advice: "Ауа қолайлы. Далада уақыт өткізуге болады." },
-      moderate: { label: "Орташа", advice: "Сезімтал адамдарға далада ұзақ жүктемені азайтқан жөн." },
-      poor: { label: "Нашар", advice: "Далада болуды азайтыңыз, әсіресе балалар, қарттар және демікпесі барлар." },
-      vpoor: { label: "Өте нашар", advice: "Далада жүктемеден аулақ болыңыз, терезені жабыңыз." },
-      epoor: { label: "Аса нашар", advice: "Үйде болыңыз. Шықсаңыз — FFP2 респираторы." },
+      good: { label: "Жақсы", advice: "Серуендеуге, спортпен шұғылдануға және бөлмені желдетуге тамаша күн." },
+      fair: { label: "Қанағаттанарлық", advice: "Ауа сапасы қолайлы. Далада еркін уақыт өткізуге болады." },
+      moderate: { label: "Орташа", advice: "Сезімтал адамдарға далада ұзақ уақыт күш салуды азайтқан жөн." },
+      poor: {
+        label: "Нашар",
+        advice: "Далада аз болыңыз, әсіресе балалар, егде жастағы адамдар және демікпемен ауыратындар.",
+      },
+      vpoor: { label: "Өте нашар", advice: "Далада күш салудан аулақ болыңыз, терезелерді жабыңыз, ауа тазартқышты қосыңыз." },
+      epoor: { label: "Аса нашар", advice: "Үйден шықпаңыз. Сыртқа шықсаңыз, FFP2 респираторын киіңіз." },
     },
     overview: {
-      title: "Қазіргі ауа",
-      subtitle: "Соңғы модельдік мәндер ДДСҰ 2021 нормаларымен салыстырылған.",
-      pollutants: "Ластаушылар",
+      title: "Ауа дәл қазір",
+      subtitle: "Соңғы модельдік мәндер ДДСҰ-ның 2021 жылғы ұсынымдарымен салыстырылды.",
+      pollutants: "Ластаушы заттар",
       weather: "Ауа райы",
-      ofGuideline: "ДДСҰ нормасынан",
+      ofGuideline: "ДДСҰ нормасының",
       guideline: "ДДСҰ нормасы",
-      noGuideline: "ДДСҰ нормасы жоқ",
+      noGuideline: "ДДСҰ нормасы белгіленбеген",
       compareTitle: "Облыс қалалары",
-      compareSubtitle: "Толығырақ көру үшін қаланы басыңыз.",
+      compareSubtitle: "Толық ақпарат көру үшін қаланы басыңыз.",
       select: "Таңдау",
-      selected: "Таңдалды",
+      selected: "Таңдалған",
     },
     map: {
-      title: "Жел мен ауаның тірі картасы",
-      subtitle: "Бөлшектер ауаның тасымалын көрсетеді; түс — таңдалған қабат мәні. Мәнді білу үшін картаны басыңыз.",
+      title: "Жел мен ауаның жедел картасы",
+      subtitle:
+        "Бөлшектер ауаның қозғалысын, ал түс таңдалған қабаттың мәнін көрсетеді. Мәнді білу үшін картаның кез келген жерін басыңыз.",
       layer: "Қабат",
       off: "Қабатсыз",
       particles: "Жел бөлшектері",
       play: "Ойнату",
-      pause: "Кідірту",
+      pause: "Тоқтата тұру",
       now: "Қазір",
       forecast: "Болжам",
       observed: "Өткен сағаттар",
-      loading: "Ауа райы өрісі жүктелуде…",
-      error: "Ауа райы өрісі жүктелмеді. Мәндер ойдан шығарылмайды.",
-      clickHint: "1° тор бойынша модель интерполяциясы, өлшеу емес.",
+      loading: "Ауа райы деректері жүктелуде…",
+      error: "Ауа райы деректерін жүктеу мүмкін болмады. Мәндер ойдан құрастырылмайды.",
+      clickHint: "1° торлы модельдің интерполяциясы, өлшеу нәтижесі емес.",
       noData: "дерек жоқ",
-      legendNote: "Шкала тек визуализацияға арналған",
+      legendNote: "Шкала тек көрнекілік үшін",
       who: "ДДСҰ",
       cityLayer: "Қалалар (AQI индексі)",
-      facilityLayer: "Сіздің нысандарыңыз",
+      facilityLayer: "Кәсіпорындар",
+      adaptive: "Контрастты шкала",
+      adaptiveHint: "Шамалы айырмашылықтар да көрінуі үшін түстерді ағымдағы мәндер ауқымына созу",
+      adaptiveNote: "Шкала картадағы ағымдағы мәндерге бейімделген",
+      emissionScale: "шығарындылар: аз → көп",
+    },
+    range: {
+      title: "Деректер кезеңі",
+      from: "Басы",
+      to: "Соңы",
+      apply: "Қолдану",
+      since2025: "2025 қаңтардан бері",
+      thisYear: "Биылғы жыл",
+      last90: "90 күн",
+      last30: "30 күн",
+      loading: "Open-Meteo мұрағаты жүктелуде…",
+      summary: "Open-Meteo мұрағаты: {n} күн",
+    },
+    analysis: {
+      title: "Өңірдің ЖИ сарапшысы",
+      subtitle:
+        "Gemini таңдалған кезеңдегі Open-Meteo мұрағатын, ағымдағы мәндерді және кәсіпорындар каталогын талдайды.",
+      focus: "Талдау бағыты",
+      focusOptions: {
+        overview: "Жалпы шолу",
+        health: "Денсаулық",
+        industry: "Өнеркәсіп",
+        seasonal: "Маусымдылық",
+        today: "Бүгін",
+      },
+      question: "Сұрағыңыз (міндетті емес)",
+      questionPlaceholder: "Мысалы: PM2.5 қай айларда ең жоғары болды және неге?",
+      run: "Талдау",
+      running: "Талдап жатырмыз…",
+      stop: "Тоқтату",
+      error: "Gemini жауап бере алмады. Қайталап көріңіз.",
+      empty: "Өңірдің өткені мен бүгінін талдау үшін бағытты таңдап, «Талдау» батырмасын басыңыз.",
+      basedOn: "Деректер: {city}, {from} — {to}",
+      disclaimer: "Талдауды модельдік деректер негізінде ЖИ жасаған, қателер болуы мүмкін.",
     },
     trends: {
       title: "Динамика және талдау",
-      subtitle: "Таңдалған кезеңде көрсеткіштер қалай өзгерді және бұл нені білдіреді.",
+      subtitle: "Таңдалған кезеңде көрсеткіштер қалай өзгергені және оның мәні.",
       parameter: "Көрсеткіш",
       airGroup: "Ауа",
       weatherGroup: "Ауа райы",
-      periods: { d1: "24 сағ", d7: "7 күн", d30: "30 күн", d90: "90 күн" },
+      periods: { all: "Бүкіл кезең", d1: "24 сағ", d7: "7 күн", d30: "30 күн", d90: "90 күн" },
       mean: "Орташа",
-      min: "Минимум",
-      max: "Максимум",
+      min: "Ең төмені",
+      max: "Ең жоғары",
       change: "Өзгеріс",
-      vsPrevious: "алдыңғы кезеңге",
-      daysAbove: "ДДСҰ нормасынан жоғары күндер",
-      ofDays: "{n} күннен",
-      missing: "Жетіспейді",
-      noData: "Таңдалған кезеңде дерек жоқ.",
+      vsPrevious: "алдыңғы кезеңмен салыстырғанда",
+      daysAbove: "ДДСҰ нормасынан асқан күндер",
+      ofDays: "{n} күннің ішінде",
+      missing: "Бос мәндер",
+      noData: "Таңдалған кезеңде деректер жоқ.",
       dailyMeans: "Тәуліктік орташа мәндер",
       hourly: "Сағаттық мәндер",
       compareTitle: "Кезең бойынша қалаларды салыстыру",
       city: "Қала",
       insightsTitle: "Бұл нені білдіреді",
-      insightWind: "Басым жел {n} ({d}°) бағытынан соғады — қоспалар қарама-қарсы жаққа тасымалданады.",
-      insightTrendUp: "Орташа мән алдыңғы кезеңмен салыстырғанда {v} {u} өсті.",
-      insightTrendDown: "Орташа мән алдыңғы кезеңмен салыстырғанда {v} {u} төмендеді — жақсы белгі.",
-      insightTrendFlat: "Көрсеткіш алдыңғы кезеңмен салыстырғанда іс жүзінде өзгермеді.",
-      insightGuidelineOk: "Кезеңде ДДСҰ нормасынан жоғары бірде-бір күн болған жоқ.",
+      insightWind: "Жел негізінен {n} ({d}°) жақтан соғады — ластаушы заттар қарама-қарсы бағытқа тарайды.",
+      insightTrendUp: "Орташа мән алдыңғы кезеңмен салыстырғанда {v} {u} артты.",
+      insightTrendDown: "Орташа мән алдыңғы кезеңмен салыстырғанда {v} {u} төмендеді — бұл жақсы белгі.",
+      insightTrendFlat: "Көрсеткіш алдыңғы кезеңмен салыстырғанда іс жүзінде өзгерген жоқ.",
+      insightGuidelineOk: "Бұл кезеңде ДДСҰ нормасынан асқан бірде-бір күн болған жоқ.",
       insightGuidelineBad: "{t} күннің {n} күнінде тәуліктік орташа мән ДДСҰ нормасынан асты.",
-      insightCaveat: "Қорытындылар модельдік деректерге негізделген және нақты кәсіпорындардың кінәсін дәлелдемейді.",
+      insightCaveat:
+        "Қорытындылар модельдік деректерге негізделген және белгілі бір кәсіпорынның кінәлі екенін дәлелдемейді.",
     },
     facilities: {
-      title: "Нысандар мен көздер",
-      subtitle: "Белгілі кәсіпорындарды немесе бақылау нүктелерін қосыңыз — олар картада пайда болады.",
+      title: "Нысандар мен ластану көздері",
+      subtitle: "Облыстағы ірі кәсіпорындар мен ластану көздері картада көрсетілген. Өз нысандарыңызды да қоса аласыз.",
       emptyTitle: "Әзірге нысандар жоқ",
-      emptyDesc: "Расталған нысандарды картаға қосу үшін JSON немесе CSV файлын импорттаңыз.",
-      importTitle: "Каталогты импорттау",
-      importDesc: "JSON массиві немесе CSV, бағандар:",
+      emptyDesc: "Тексерілген нысандарды картаға қосу үшін JSON немесе CSV файлын жүктеңіз.",
+      emissionsLabel: "Шығарындылар",
+      importTitle: "Каталогты жүктеу",
+      importDesc: "JSON массиві немесе келесі бағандары бар CSV:",
       chooseFile: "Файлды таңдаңыз",
-      import: "Импорттау",
-      clear: "Тазалау",
-      imported: "Қосылды: {ok}. Координатсыз өткізілді: {bad}.",
+      import: "Жүктеу",
+      clear: "Тазарту",
+      imported: "Қосылды: {ok}. Координатасыз өткізіліп жіберілді: {bad}.",
       parseError: "Файлды оқу мүмкін болмады.",
-      verified: "Расталған",
+      verified: "Тексерілген",
       needsCheck: "Тексеруді қажет етеді",
       official: "Ресми",
-      manual: "Қолмен",
-      cols: { name: "Атауы", type: "Түрі", coords: "Координаттар", status: "Күйі", source: "Дереккөз" },
+      manual: "Қолмен қосылған",
+      cols: { name: "Атауы", type: "Түрі", coords: "Координаталар", status: "Мәртебесі", source: "Дереккөз" },
     },
     about: {
       title: "Деректер туралы",
@@ -421,30 +549,37 @@ export const DICT: Record<Lang, Dict> = {
       sources: "Дереккөздер",
       limitations: "Шектеулер",
       limitationsList: [
-        "Барлық мәндер — модельдік бағалаулар (Open-Meteo, CAMS), станция өлшеулері емес.",
-        "Қала координаттары шамамен; модель торы жергілікті бедерді ескермейді.",
-        "Болжам сағаттары статистикаға кірмейді.",
-        "Нысандар каталогы тек сіздің браузеріңізде сақталады.",
+        "Барлық мәндер — модельдік бағалаулар (Open-Meteo, CAMS), бақылау станцияларының өлшемдері емес.",
+        "Қалалардың координаталары шамамен алынған; модель торы жергілікті жер бедерін ескермейді.",
+        "Болжам сағаттары статистикаға енгізілмейді.",
+        "Өзіңіз қосқан нысандар тек браузеріңізде сақталады.",
       ],
       methodology: "Әдістеме",
       methodologyText:
-        "Ауа райы мен ауа сапасы соңғы 92 күн бойы сағат сайын жүктеледі. Жел бағытының орташасы шеңбер бойынша есептеледі. ДДСҰ нормасынан асу тәуліктік орташа бойынша бағаланады.",
+        "Ауа райы мен ауа сапасы деректері Open-Meteo мұрағатынан таңдалған кезең үшін (2025 жылғы қаңтардан бастап) сағат сайын жүктеледі. Жел бағытының орташа мәні шеңбер бойынша есептеледі. ДДСҰ нормасынан асу тәуліктік орташа мәндер бойынша бағаланады.",
       sourceNotes: {
-        weather: "Сағаттық ауа райы моделі мен талдауы",
-        air: "CAMS моделі, станция өлшеуі емес",
-        tiles: "Карта негізі © OpenStreetMap contributors",
-        boundary: "Облыс шекарасы OpenStreetMap-тен",
+        weather: "Ауа райының сағаттық моделі мен талдауы",
+        air: "CAMS моделі, станция өлшемдері емес",
+        tiles: "Картаның негізі © OpenStreetMap contributors",
+        boundary: "Облыс шекарасы OpenStreetMap деректерінен",
       },
     },
     footer: "EcoPavlodar — Павлодар облысының ашық экомониторы.",
     loading: "Деректер жүктелуде…",
-    fetchError: "Open-Meteo деректерін алу мүмкін болмады. Байланысты тексеріңіз.",
-    dirs: ["Т", "ТШ", "Ш", "ОШ", "О", "ОБ", "Б", "СБ"],
+    fetchError: "Open-Meteo деректерін алу мүмкін болмады. Интернет байланысын тексеріңіз.",
+    dirs: ["С", "СШ", "Ш", "ОШ", "О", "ОБ", "Б", "СБ"],
     params: params.kk,
     paramsShort,
   },
   en: {
-    nav: { overview: "Overview", map: "Map", trends: "Trends", facilities: "Facilities", about: "About data" },
+    nav: {
+      overview: "Overview",
+      map: "Map",
+      trends: "Trends",
+      analysis: "AI analysis",
+      facilities: "Facilities",
+      about: "About data",
+    },
     langLabel: "Language",
     hero: {
       eyebrow: "Pavlodar region · eco monitor",
@@ -500,7 +635,44 @@ export const DICT: Record<Lang, Dict> = {
       legendNote: "Scale is for visualisation only",
       who: "WHO",
       cityLayer: "Cities (AQI)",
-      facilityLayer: "Your facilities",
+      facilityLayer: "Industrial facilities",
+      adaptive: "High-contrast scale",
+      adaptiveHint: "Stretch colours over the current value range so even small differences are visible",
+      adaptiveNote: "Scale stretched to the values currently on the map",
+      emissionScale: "emissions: low → high",
+    },
+    range: {
+      title: "Data period",
+      from: "From",
+      to: "To",
+      apply: "Apply",
+      since2025: "Since Jan 2025",
+      thisYear: "This year",
+      last90: "90 days",
+      last30: "30 days",
+      loading: "Loading Open-Meteo archive…",
+      summary: "Open-Meteo archive: {n} days",
+    },
+    analysis: {
+      title: "AI regional analyst",
+      subtitle: "Gemini analyses the Open-Meteo archive for the selected period, current values and the facility catalog.",
+      focus: "Analysis focus",
+      focusOptions: {
+        overview: "Overview",
+        health: "Health",
+        industry: "Industry",
+        seasonal: "Seasonality",
+        today: "Today",
+      },
+      question: "Your question (optional)",
+      questionPlaceholder: "E.g. which months had the highest PM2.5 and why?",
+      run: "Analyse",
+      running: "Analysing…",
+      stop: "Stop",
+      error: "Could not get a response from Gemini. Please try again.",
+      empty: "Pick a focus and press Analyse to get a breakdown of the region's past and present.",
+      basedOn: "Data: {city}, {from} — {to}",
+      disclaimer: "AI-generated analysis based on model data; it may contain mistakes.",
     },
     trends: {
       title: "Trends & insights",
@@ -508,7 +680,7 @@ export const DICT: Record<Lang, Dict> = {
       parameter: "Parameter",
       airGroup: "Air",
       weatherGroup: "Weather",
-      periods: { d1: "24 h", d7: "7 days", d30: "30 days", d90: "90 days" },
+      periods: { all: "Whole period", d1: "24 h", d7: "7 days", d30: "30 days", d90: "90 days" },
       mean: "Mean",
       min: "Min",
       max: "Max",
@@ -536,6 +708,7 @@ export const DICT: Record<Lang, Dict> = {
       subtitle: "Add known plants or observation points — they will appear on the map.",
       emptyTitle: "No facilities yet",
       emptyDesc: "Import a JSON or CSV file to add verified facilities to the map.",
+      emissionsLabel: "Emissions",
       importTitle: "Import catalog",
       importDesc: "JSON array or CSV with columns:",
       chooseFile: "Choose file",
@@ -562,7 +735,7 @@ export const DICT: Record<Lang, Dict> = {
       ],
       methodology: "Methodology",
       methodologyText:
-        "Weather and air quality are loaded hourly for the last 92 days. Wind direction means are computed circularly. WHO guideline exceedances are assessed on daily means.",
+        "Weather and air quality are loaded hourly from the Open-Meteo archive for the selected period (since January 2025). Wind direction means are computed circularly. WHO guideline exceedances are assessed on daily means.",
       sourceNotes: {
         weather: "Hourly weather model and analysis",
         air: "CAMS model, not station measurements",

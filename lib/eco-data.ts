@@ -97,12 +97,34 @@ async function getJSON<T>(url: string): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export const PAST_DAYS = 92
+export type DateRange = { start: string; end: string }
 
-export async function fetchCitySeries(lat: number, lon: number): Promise<CitySeries> {
-  const base = `latitude=${lat}&longitude=${lon}&timezone=Asia%2FAlmaty&past_days=${PAST_DAYS}&forecast_days=2`
+export const DATA_MIN_DATE = "2023-01-01"
+export const DEFAULT_START = "2025-01-01"
+
+export function todayAlmaty(): string {
+  return almatyNow().slice(0, 10)
+}
+
+export function shiftDate(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number)
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10)
+}
+
+export function daysBetween(a: string, b: string): number {
+  return Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000)
+}
+
+/**
+ * Without a range: recent days plus a short forecast (for "now" views).
+ * With a range: the Open-Meteo historical-forecast archive between the two dates (inclusive).
+ */
+export async function fetchCitySeries(lat: number, lon: number, range?: DateRange): Promise<CitySeries> {
+  const loc = `latitude=${lat}&longitude=${lon}&timezone=Asia%2FAlmaty`
+  const base = range ? `${loc}&start_date=${range.start}&end_date=${range.end}` : `${loc}&past_days=7&forecast_days=2`
+  const weatherHost = range ? "https://historical-forecast-api.open-meteo.com" : "https://api.open-meteo.com"
   const [weather, air] = await Promise.all([
-    getJSON<OpenMeteoHourly>(`https://api.open-meteo.com/v1/forecast?${base}&hourly=${WEATHER_PARAMS.join(",")}`),
+    getJSON<OpenMeteoHourly>(`${weatherHost}/v1/forecast?${base}&hourly=${WEATHER_PARAMS.join(",")}`),
     getJSON<OpenMeteoHourly>(
       `https://air-quality-api.open-meteo.com/v1/air-quality?${base}&hourly=${AIR_PARAMS.join(",")}`,
     ).catch(() => null),

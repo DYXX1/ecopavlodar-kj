@@ -23,7 +23,8 @@ import {
   type PeriodStats,
 } from "@/lib/eco-data"
 import { fill } from "@/lib/i18n"
-import { useCitySeries, useEco } from "./eco-provider"
+import { DateRangeControl } from "./date-range-control"
+import { useCityHistory, useEco } from "./eco-provider"
 import { SectionHeading } from "./section-heading"
 
 const PERIODS = [
@@ -31,15 +32,16 @@ const PERIODS = [
   { key: "d7", hours: 24 * 7 },
   { key: "d30", hours: 24 * 30 },
   { key: "d90", hours: 24 * 90 },
+  { key: "all", hours: Number.POSITIVE_INFINITY },
 ] as const
 type PeriodKey = (typeof PERIODS)[number]["key"]
 
 export function Trends() {
   const { t, lang, city } = useEco()
   const [param, setParam] = useState<Param>("pm2_5")
-  const [period, setPeriod] = useState<PeriodKey>("d7")
+  const [period, setPeriod] = useState<PeriodKey>("all")
   const hours = PERIODS.find((p) => p.key === period)!.hours
-  const { data, error, isLoading } = useCitySeries(city)
+  const { data, error, isLoading } = useCityHistory(city)
   const stats = useMemo(() => (data ? periodStats(data, param, hours) : null), [data, param, hours])
   const windStats = useMemo(() => (data ? periodStats(data, "wind_direction_10m", hours) : null), [data, hours])
   const unit = data?.units[param] ?? ""
@@ -47,6 +49,8 @@ export function Trends() {
   return (
     <section id="trends" className="mx-auto max-w-6xl px-4 py-16 md:px-6">
       <SectionHeading title={t.trends.title} subtitle={t.trends.subtitle} />
+
+      <DateRangeControl className="mb-4" />
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
@@ -319,7 +323,7 @@ function CompareTable({ param, hours }: { param: Param; hours: number }) {
 
 function CompareRow({ city: c, param, hours, showDays }: { city: City; param: Param; hours: number; showDays: boolean }) {
   const { lang, city } = useEco()
-  const { data, isLoading } = useCitySeries(c)
+  const { data, isLoading } = useCityHistory(c)
   const s = useMemo(() => (data ? periodStats(data, param, hours) : null), [data, param, hours])
   const unit = data?.units[param] ?? ""
   if (isLoading) {

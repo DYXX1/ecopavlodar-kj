@@ -36,6 +36,59 @@ export const OVERLAY_SCALE: Record<Exclude<OverlayLayer, "off">, { range: [numbe
   sulphur_dioxide: { range: [0, 200], colors: AIR, who: 40 },
 }
 
+/** High-contrast perceptual palette used when the scale is stretched to the values currently on the map. */
+const TURBO = ["#30123b", "#4662d7", "#36aaf9", "#1ae4b6", "#72fe5e", "#c8ef34", "#faba39", "#f66b19", "#ca2a04", "#7a0403"]
+
+/** Smallest span the adaptive scale may shrink to, so model noise is not exaggerated into fake hot spots. */
+const MIN_SPAN: Record<Exclude<OverlayLayer, "off">, number> = {
+  wind_speed_10m: 3,
+  temperature_2m: 2,
+  precipitation: 0.4,
+  relative_humidity_2m: 8,
+  pm2_5: 3,
+  pm10: 6,
+  nitrogen_dioxide: 3,
+  sulphur_dioxide: 3,
+}
+
+export type ScaleInfo = { range: [number, number]; colors: string[]; who?: number; adaptive: boolean }
+
+export function overlayScale(
+  g: GridData | null | undefined,
+  layer: Exclude<OverlayLayer, "off">,
+  ti: number,
+  adaptive: boolean,
+): ScaleInfo {
+  const fixed = OVERLAY_SCALE[layer]
+  const field = g?.fields[layer]
+  if (!adaptive || !field) return { ...fixed, adaptive: false }
+  let lo = Number.POSITIVE_INFINITY
+  let hi = Number.NEGATIVE_INFINITY
+  for (const row of field) {
+    const v = row?.[ti]
+    if (v == null) continue
+    if (v < lo) lo = v
+    if (v > hi) hi = v
+  }
+  if (!Number.isFinite(lo)) return { ...fixed, adaptive: false }
+  const minSpan = MIN_SPAN[layer]
+  if (hi - lo < minSpan) {
+    const mid = (hi + lo) / 2
+    lo = mid - minSpan / 2
+    hi = mid + minSpan / 2
+  }
+  if (fixed.range[0] >= 0 && lo < 0) {
+    hi -= lo
+    lo = 0
+  }
+  return {
+    range: [lo, hi],
+    colors: layer === "temperature_2m" ? fixed.colors : TURBO,
+    who: fixed.who,
+    adaptive: true,
+  }
+}
+
 export type GridData = {
   time: string[]
   nowIndex: number
@@ -112,6 +165,7 @@ export class WindOverlay {
   private ti = 0
   private layer: OverlayLayer = "wind_speed_10m"
   private particles = true
+  private adaptive = true
   private visible = true
   private raf = 0
   private last = 0
@@ -188,6 +242,11 @@ export class WindOverlay {
 
   setLayer(layer: OverlayLayer) {
     this.layer = layer
+    this.redraw(false)
+  }
+
+  setAdaptive(on: boolean) {
+    this.adaptive = on
     this.redraw(false)
   }
 
@@ -275,7 +334,7 @@ export class WindOverlay {
     this.cf.clearRect(0, 0, this.fc.width, this.fc.height)
     if (!this.g || this.layer === "off" || !this.g.fields[this.layer]) return
     const p = this.layer
-    const { range, colors } = OVERLAY_SCALE[p]
+    const { range, colors } = overlayScale(this.g, p, this.ti, this.adaptive)
     const [lo, hi] = range
     const step = 6
     for (let y = 0; y < this.fc.height; y += step)
@@ -283,7 +342,7 @@ export class WindOverlay {
         const ll = this.map.containerPointToLatLng([x + this.ox + step / 2, y + this.oy + step / 2])
         const v = this.bil(ll.lat, ll.lng, (i) => this.val(p, i))
         if (v == null || (p === "precipitation" && v < 0.05)) continue
-        this.cf.fillStyle = `rgba(${rgbAt(colors, (v - lo) / (hi - lo))},.5)`
+        this.cf.fillStyle = `rgba(${rgbAt(colors, (v - lo) / (hi - lo))},.58)`
         this.cf.fillRect(x, y, step, step)
       }
   }

@@ -17,6 +17,7 @@ export function SiteHeader() {
     ["overview", t.nav.overview],
     ["map", t.nav.map],
     ["trends", t.nav.trends],
+    ["analysis", t.nav.analysis],
     ["facilities", t.nav.facilities],
     ["about", t.nav.about],
   ] as const
